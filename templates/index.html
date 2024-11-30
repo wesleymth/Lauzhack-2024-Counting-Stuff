@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation des Caractéristiques</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h1>Visualisation des caractéristiques au fil du temps</h1>
+
+    <form method="POST">
+        <label for="features">Sélectionnez les caractéristiques :</label><br>
+        {% for feature in feature_options %}
+            <input type="checkbox" name="features" value="{{ feature }}" 
+                   {% if feature in request.form.getlist('features') %}checked{% endif %}>
+            {{ feature }}<br>
+        {% endfor %}
+        <button type="submit">Tracer</button>
+    </form>
+
+    <div>
+        {% if graph_html %}
+            {{ graph_html|safe }}
+        {% else %}
+            <p>Aucun graphique à afficher. Veuillez sélectionner des caractéristiques.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
