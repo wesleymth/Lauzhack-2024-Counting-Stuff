@@ -57,7 +57,7 @@ def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=
                         (int(box[0]), int(box[1]) - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
         result["image_with_boxes"] = f'data/{name}_{i}.jpg'
-        cv2.imwrite(f'data/{name}_{i}.jpg', img)
+        cv2.imwrite(f'data/{name}_{i}.jpg', img[...,::-1])
     return results
 
 def select_tanks(results, size_threshold = 100):
