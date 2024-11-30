@@ -35,51 +35,49 @@ def predict_and_detect(chosen_model, imgs, classes=[], conf=0.5, rectangle_thick
         all_data.append(res)
     return all_data, name
 
-def predict_and_detect_obb(chosen_model, imgs, classes=[], conf=0.5, rectangle_thickness=2, text_thickness=1):
+def predict_and_detect_obb(chosen_model, imgs, classes=[], conf=0.5):
     results = predict(chosen_model, imgs, classes, conf=conf)
     name = results[0].names[int(classes[0])] if classes else "all"
     all_data = []
     for result, img in zip(results, imgs):
-        res = {
-        "boxes": [],
-        "cls" :[]
-            }
+        res = {}
         res["original_image"] = img.copy()
-        for box, cls in zip(result.obb.xyxy, result.obb.cls):
-            cv2.rectangle(img, (int(box[0]), int(box[1])),
-                          (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
-            cv2.putText(img, f"{result.names[int(cls)]}",
-                        (int(box[0]), int(box[1]) - 10),
-                        cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
-            res["boxes"].append(box)
-            res["cls"].append(cls)
+        res["boxes"] = (list(result.obb.xyxy))
+        res["cls"] = (list(result.obb.cls))
         res["image_with_boxes"] = img
         all_data.append(res)
     
-    return img, all_data, name
+    return all_data, name
 
-
-def extract_images_boxes(images, results):
-    for res, image in zip (results, images) :
-        images_boxes = []
-        for x_min, y_min, x_max, y_max in res["boxes"]:
-            cropped_image = image[int(y_min):int(y_max), int(x_min):int(x_max)] 
-            images_boxes.append(cropped_image) 
-        res["images_boxes"] = images_boxes
+def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=1) : 
+    for result in results : 
+        img = result["image_with_boxes"].copy()
+        for box, cls in zip(result["boxes"], result["cls"]):
+            cv2.rectangle(img, (int(box[0]), int(box[1])),
+                        (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
+            cv2.putText(img, f"{name}",
+                        (int(box[0]), int(box[1]) - 10),
+                        cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
+        result["image_with_boxes"] = img
     return results
 
-def is_in_construction(results, threshold = 100):
-    for image in results :
-        colors = []
+
+def extract_tanks_infos(results, threshold = 100):
+    for res in results :
+        images_boxes = []
         is_in_construction = []
-        for i, cropped_image in enumerate(image["images_boxes"]):
+        sizes = []
+        for x_min, y_min, x_max, y_max in res["boxes"]:
+            cropped_image = res["original_image"][int(y_min):int(y_max), int(x_min):int(x_max)] 
+            images_boxes.append(cropped_image) 
             center_image = cropped_image[int(cropped_image.shape[0]/2), int(cropped_image.shape[1]/2)]
             mean_color = center_image.mean()
-            colors.append(mean_color)
             is_in_construction.append(mean_color > threshold)
-        
-        image["color"] = colors
-        image["is_in_construction"] = is_in_construction
+            size = cropped_image.shape[0]
+            sizes.append(size)
+        res["images_boxes"] = images_boxes
+        res["is_in_construction"] = is_in_construction
+        res["size"] = sizes
     return results
 
 def count_people(images, conf=0.5):
@@ -120,12 +118,13 @@ def count_satellite(images, classes, conf=0.5):
     """
     images = [cv2.imread(image) for image in images]
     model = YOLO("yolo11n-obb.pt")
-    result_img, results, name = predict_and_detect_obb(model, images, classes, conf=conf)
+    results, name = predict_and_detect_obb(model, images, classes, conf=conf)
     
     if classes == [2]:
-        results = extract_images_boxes(images, results)
-        results = is_in_construction(results)
+        results = extract_tanks_infos(results)
+    
+    results = show_images_with_boxes(results, name)
         
     with open(f'data/results_satellite_{name}.pkl', 'wb') as f:
         pickle.dump(results, f)
-    return result_img 
+    return results 
