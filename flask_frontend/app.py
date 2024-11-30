@@ -2,6 +2,9 @@ import os
 import time as t
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
+from src.yolo import count_people_tool, count_storage_tanks_tool
+from src.function_calling_agent import get_agent
+import os
 
 
 # import dash
@@ -43,10 +46,17 @@ def allowed_file(filename):
 
 
 # Function to generate chatbot responses
-def get_bot_response(user_message):
-    t.sleep(2)
+def get_bot_response(user_message, image_filename:str=None):
     # Placeholder for chatbot logic (e.g., OpenAI API call)
-    return "yes"  # Replace with dynamic logic in the future
+    agent = get_agent([count_people_tool, count_storage_tanks_tool])
+    
+    if image_filename is not None:
+        user_message += f" image_filename={"./flask_frontend/" + image_filename}"
+    
+        print(user_message)
+    response = agent.chat(user_message)
+    
+    return response.response
 
 
 @app.route("/")
@@ -70,9 +80,12 @@ def chat():
             file.save(file_path)
             file_url = url_for("static", filename=f"uploads/{filename}")
 
-    # Get chatbot response
-    bot_response = get_bot_response(message)
-    bot_processed_img = "static/processed/" + file_path.split("/")[-1]
+        bot_processed_img = "static/processed/" + file_path.split("/")[-1]
+        # Get chatbot response
+        bot_response = get_bot_response(message, file_url)
+    else:
+        bot_response = get_bot_response(message)
+   
 
     print(file_url)
     # Return JSON response
