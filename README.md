@@ -11,8 +11,10 @@ conda create -n lauz24 python=3.12
 conda activate lauz24
 
 # Install the required dependencies
-pip install -r requirements.txt
+pip install -r requirements.cv.txt
+pip install -r requirements.flask.txt
+pip install -r requirements.llms.txt
 
 # # Install local src package
-# pip install -e . --use-pep517
+pip install -e .
 ```
