@@ -1,6 +1,11 @@
-from flask import Flask, render_template, request, jsonify, url_for
 import os
+import time as t
+from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
+
+
+# import dash
+# from dash import dcc, html
 
 app = Flask(__name__)
 
@@ -13,18 +18,40 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
+# # Initialize Dash app
+# dash_app = dash.Dash(__name__, server=app, routes_pathname_prefix="/dash/")
+
+# # Dash layout
+# dash_app.layout = html.Div(
+#     [
+#         dcc.Graph(
+#             id="example-graph",
+#             figure={
+#                 "data": [
+#                     {"x": [1, 2, 3], "y": [4, 1, 2], "type": "bar", "name": "SF"},
+#                     {"x": [1, 2, 3], "y": [2, 4, 5], "type": "bar", "name": "Montréal"},
+#                 ],
+#                 "layout": {"title": "Dash Data Visualization"},
+#             },
+#         )
+#     ]
+# )
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 # Function to generate chatbot responses
 def get_bot_response(user_message):
+    t.sleep(2)
     # Placeholder for chatbot logic (e.g., OpenAI API call)
     return "yes"  # Replace with dynamic logic in the future
 
 
 @app.route("/")
 def index():
+
     return render_template("index.html")
 
 
@@ -45,13 +72,13 @@ def chat():
 
     # Get chatbot response
     bot_response = get_bot_response(message)
+    bot_processed_img = "static/processed/" + file_path.split("/")[-1]
 
     print(file_url)
     # Return JSON response
     response = {
-        "user_message": message,
         "bot_response": bot_response,
-        "file_url": file_url,
+        "bot_processed_img": bot_processed_img,
     }
     return jsonify(response)
 

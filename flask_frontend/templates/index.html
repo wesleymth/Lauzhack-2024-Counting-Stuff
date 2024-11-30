@@ -13,6 +13,9 @@
             <h3>Chatbot</h3>
         </div>
         <div id="chat-body" class="chat-body"></div>
+		<div id="loading-dots" class="loading-dots" style="display:none;">
+			<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+		</div>
         <div class="chat-footer">
             <form id="chat-form" enctype="multipart/form-data">
                 <div class="input-group">
@@ -29,7 +32,30 @@
         $(document).ready(function () {
             $("#chat-form").on("submit", function (event) {
                 event.preventDefault();
-                let formData = new FormData(this);
+                // Extract user's message and uploaded file
+                let userMessage = $("#msg").val();
+                let fileInput = $("#file")[0].files[0];
+                let chatBody = $("#chat-body");
+				let loadingDots = $("#loading-dots");
+
+                // Display user's message and image immediately
+                let userMessageCell = `
+                            <div class="message user">
+                                ${
+                                    fileInput
+                                        ? `<img src="${URL.createObjectURL(fileInput)}" alt="Uploaded Image" class="uploaded-image">`
+                                        : ""
+                                }
+								<div>${userMessage}</div>
+                            </div>
+                        `;
+                chatBody.append(userMessageCell);
+                chatBody.scrollTop(chatBody.prop("scrollHeight"));
+
+				// Show loading dots
+       			loadingDots.show();
+
+				let formData = new FormData(this);
 
                 $.ajax({
                     url: "/chat",
@@ -38,32 +64,27 @@
                     processData: false,
                     contentType: false,
                     success: function (response) {
-                        let chatBody = $("#chat-body");
+						// Hide loading dots and append bot's response
+                		loadingDots.hide();
 
-                        // Append user's message and image in the same cell
-                        let userMessageCell = `
+						// Append bot's response
+						chatBody.append(`
                             <div class="message user">
                                 ${
-                                    response.file_url
-                                        ? `<img src="${response.file_url}" alt="Uploaded Image" class="uploaded-image">`
+                                    fileInput
+                                        ? `<img src="${URL.createObjectURL(response.bot_processed_img)}" alt="Uploaded Image" class="uploaded-image">`
                                         : ""
                                 }
-								<div>${response.user_message}</div>
-                            </div>
-                        `;
-                        chatBody.append(userMessageCell);
-
-                        // Append bot's response
-                        chatBody.append(`
-                            <div class="message bot">
-                                ${response.bot_response}
+								<div>${response.bot_response}</div>
                             </div>
                         `);
-
+						
                         chatBody.scrollTop(chatBody.prop("scrollHeight")); // Scroll to bottom
-                        $("#chat-form")[0].reset(); // Reset form
                     }
                 });
+
+				// Reset form
+                $("#chat-form")[0].reset();
             });
         });
     </script>
