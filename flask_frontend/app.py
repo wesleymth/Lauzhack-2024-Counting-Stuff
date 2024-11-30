@@ -17,6 +17,12 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# Function to generate chatbot responses
+def get_bot_response(user_message):
+    # Placeholder for chatbot logic (e.g., OpenAI API call)
+    return "yes"  # Replace with dynamic logic in the future
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -37,8 +43,16 @@ def chat():
             file.save(file_path)
             file_url = url_for("static", filename=f"uploads/{filename}")
 
+    # Get chatbot response
+    bot_response = get_bot_response(message)
+
+    print(file_url)
     # Return JSON response
-    response = {"message": message, "file_url": file_url}
+    response = {
+        "user_message": message,
+        "bot_response": bot_response,
+        "file_url": file_url,
+    }
     return jsonify(response)
 
 
