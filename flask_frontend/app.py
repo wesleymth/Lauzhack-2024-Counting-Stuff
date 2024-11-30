@@ -51,7 +51,7 @@ def get_bot_response(user_message, image_filename:str=None):
     agent = get_agent([count_people_tool, count_storage_tanks_tool])
     
     if image_filename is not None:
-        user_message += f" image_filename={"./flask_frontend/" + image_filename}"
+        user_message += f" image_filename={"./flask_frontend" + image_filename}"
     
         print(user_message)
     response = agent.chat(user_message)

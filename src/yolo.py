@@ -56,8 +56,8 @@ def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=
             cv2.putText(img, f"{name}",
                         (int(box[0]), int(box[1]) - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
-        result["image_with_boxes"] = f'data/{name}_{i}.jpg'
-        cv2.imwrite(f'data/{name}_{i}.jpg', img[...,::-1])
+        result["image_with_boxes"] = name
+        cv2.imwrite(name, img[...,::-1])
     return results
 
 def select_tanks(results, size_threshold = 100):
@@ -131,8 +131,8 @@ def count_satellite(images, classes, conf=0.5, save_name = "image_tanks", save=F
     if save:
         results = show_images_with_boxes(results, save_name)
         
-    with open(f'data/results_satellite_{save_name}.pkl', 'wb') as f:
-        pickle.dump(results, f)
+    # with open(f'data/results_satellite_{save_name}.pkl', 'wb') as f:
+    #     pickle.dump(results, f)
     return results 
 
 def count_storage_tanks_tool(image_path : str) -> int:
