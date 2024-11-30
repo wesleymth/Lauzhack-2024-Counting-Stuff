@@ -134,3 +134,11 @@ def count_satellite(images, classes, conf=0.5, save_name = "image_tanks", save=F
     with open(f'data/results_satellite_{save_name}.pkl', 'wb') as f:
         pickle.dump(results, f)
     return results 
+
+def count_storage_tanks_tool(image_path : str) -> int:
+    """
+    Count the number of storage tanks in an image
+    """
+    res = count_satellite([image_path], [2], save_name=image_path.replace('uploads', 'processed'), save=True)
+    count  = len(res[0]["boxes"])
+    return count
