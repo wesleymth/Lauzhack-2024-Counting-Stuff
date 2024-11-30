@@ -37,30 +37,35 @@ def predict_and_detect(chosen_model, imgs, classes=[], conf=0.5, rectangle_thick
 
 def predict_and_detect_obb(chosen_model, imgs, classes=[], conf=0.5):
     results = predict(chosen_model, imgs, classes, conf=conf)
-    name = results[0].names[int(classes[0])] if classes else "all"
     all_data = []
     for result, img in zip(results, imgs):
         res = {}
         res["original_image"] = img.copy()
         res["boxes"] = (list(result.obb.xyxy))
         res["cls"] = (list(result.obb.cls))
-        res["image_with_boxes"] = img
         all_data.append(res)
     
-    return all_data, name
+    return all_data
 
-def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=1) : 
-    for result in results : 
-        img = result["image_with_boxes"].copy()
-        for box, cls in zip(result["boxes"], result["cls"]):
+def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=1):
+    for i, result in enumerate(results) : 
+        img = result["original_image"].copy()
+        for box in result["boxes"]:
             cv2.rectangle(img, (int(box[0]), int(box[1])),
                         (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
             cv2.putText(img, f"{name}",
                         (int(box[0]), int(box[1]) - 10),
                         cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
-        result["image_with_boxes"] = img
+        result["image_with_boxes"] = f'data/{name}_{i}.jpg'
+        cv2.imwrite(f'data/{name}_{i}.jpg', img)
     return results
 
+def select_tanks(results, size_threshold = 100):
+    selected_results = []
+    for res in results:
+        if res["cls"] == [2]:
+            selected_results.append(res)
+    return selected_results
 
 def extract_tanks_infos(results, threshold = 100):
     for res in results :
@@ -96,7 +101,7 @@ def count_people_tool(image_path : str) -> int:
     count  = len(res[0]["boxes"])
     return count
 
-def count_satellite(images, classes, conf=0.5):
+def count_satellite(images, classes, conf=0.5, save_name = "image_tanks", save=False):
     """
     classes : list of int
     {0: 'plane',
@@ -118,13 +123,14 @@ def count_satellite(images, classes, conf=0.5):
     """
     images = [cv2.imread(image) for image in images]
     model = YOLO("yolo11n-obb.pt")
-    results, name = predict_and_detect_obb(model, images, classes, conf=conf)
+    results = predict_and_detect_obb(model, images, classes, conf=conf)
     
     if classes == [2]:
         results = extract_tanks_infos(results)
-    
-    results = show_images_with_boxes(results, name)
+        # results = select_tanks(results)
+    if save:
+        results = show_images_with_boxes(results, save_name)
         
-    with open(f'data/results_satellite_{name}.pkl', 'wb') as f:
+    with open(f'data/results_satellite_{save_name}.pkl', 'wb') as f:
         pickle.dump(results, f)
     return results 
