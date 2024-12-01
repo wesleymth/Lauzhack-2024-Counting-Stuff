@@ -69,13 +69,13 @@ def plot():
                 # Plot la proportion de chaque classe
                 proportions = [np.mean(v) for v in values]
                 fig = go.Figure()
-                fig.add_trace(go.Scatter(x=timestamps, y=proportions, fill="tozeroy", mode="lines+markers", fillcolor="LightSalmon"))
+                fig.add_trace(go.Scatter(x=timestamps, y=proportions, fill="tozeroy", mode="lines+markers", fillcolor="Lavender"))
                 fig.update_layout(
                     title=f"Proportion de chaque classe dans le temps",
                     xaxis_title="Temps",
                     yaxis_title="Proportion",
                     template="plotly_white",
-                    shapes=[dict(type="rect", xref="paper", x0=0, x1=1, y0=0, y1=1, fillcolor="IndianRed", layer="below", line_width=0)]
+                    shapes=[dict(type="rect", xref="paper", x0=0, x1=1, y0=0, y1=1, fillcolor="LightSkyBlue", layer="below", line_width=0)]
                 )
             else:
                 mean_values = [np.mean(v) for v in values]
