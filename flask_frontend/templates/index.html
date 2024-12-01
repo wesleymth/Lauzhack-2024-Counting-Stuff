@@ -26,6 +26,9 @@
             </form>
         </div>
     </div>
+    <div id="plot-body" class="plot-body"></div>
+
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -68,7 +71,16 @@
                 		loadingDots.hide();
 
 						// Append bot's response
-						chatBody.append(`
+                        // Check if processed_img is None or not in the response
+                        if (response.bot_processed_img == null || response.bot_processed_img === '') {
+                            // Handle the case when processed_img is not available
+                            chatBody.append(`
+                                <div class="message bot">
+                                    <div>${response.bot_response}</div>
+                                </div>
+                            `);
+                        } else {
+                            chatBody.append(`
                             <div class="message bot">
                                 ${
                                     response.bot_processed_img
@@ -78,10 +90,27 @@
 								<div>${response.bot_response}</div>
                             </div>
                         `);
+                        }
+						
+
 						
                         chatBody.scrollTop(chatBody.prop("scrollHeight")); // Scroll to bottom
+
+                        let plotBody = $("#plot-body");
+                        // Append interactive plots if plot_paths is non-empty
+                        if (response.plot_paths && response.plot_paths.length > 0) {
+                            response.plot_paths.forEach(plotPath => {
+                                console.log("Adding plot:", plotPath); // Debugging
+                                plotBody.append(`
+                                    <iframe src="${plotPath}" class="plot-iframe"></iframe>
+                                `);
+                            });
+                        }
                     }
+                    
                 });
+                
+                
 
 				// Reset form
                 $("#chat-form")[0].reset();

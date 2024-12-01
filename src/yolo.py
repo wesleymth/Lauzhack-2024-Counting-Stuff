@@ -54,7 +54,7 @@ def show_images_with_boxes(results, name, rectangle_thickness=2):
             cv2.rectangle(img, (int(box[0]), int(box[1])),
                         (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
         result["image_with_boxes"] = img[...,::-1] #name
-        cv2.imwrite(name, img[...,::-1])
+        cv2.imwrite(name, img)
     return results
 
 def select_tanks(results, size_threshold, debug):

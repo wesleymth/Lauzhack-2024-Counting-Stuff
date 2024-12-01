@@ -99,3 +99,17 @@ html {
 		opacity: 0;
 	}
 }
+
+
+.plot-body {
+    padding: 15px;
+}
+
+.plot-iframe {
+    width: 100%; /* Make iframe span the full width of its container */
+    height: 500px; /* Set an appropriate height */
+    border: none; /* Remove default border for better aesthetics */
+    margin-top: 15px; /* Add spacing between iframes if multiple are displayed */
+    border-radius: 8px; /* Optional: Rounded corners for aesthetics */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for visual appeal */
+}
