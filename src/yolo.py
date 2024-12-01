@@ -101,7 +101,7 @@ def count_people_tool(image_path : str) -> int:
     """
     Count the number of people in an image
     """
-    res = count_people([image_path])
+    res = count_people([image_path], save_name=image_path.replace('uploads', 'processed'), save=True)
     count  = len(res[0]["boxes"])
     return count
 
