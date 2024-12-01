@@ -60,14 +60,17 @@ def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=
         cv2.imwrite(name, img[...,::-1])
     return results
 
-def select_tanks(results, size_threshold = 100):
+def select_tanks(results, size_threshold):
     selected_results = []
     for res in results:
-        if res["cls"] == [2]:
-            selected_results.append(res)
+        idx = [i for i, size in enumerate(res["size"]) if size > size_threshold]
+        res_selected = {key:[res[key][i] for i in idx] for key in ['boxes', 'cls', 'images_boxes', 'is_in_construction', 'size']}   
+        res_selected['original_image']= res['original_image']
+        print(f"Number of tanks detected : {len(idx)}")
+        selected_results.append(res_selected)
     return selected_results
 
-def extract_tanks_infos(results, threshold = 100):
+def extract_tanks_infos(results, scale, threshold = 100):
     for res in results :
         images_boxes = []
         is_in_construction = []
@@ -78,7 +81,7 @@ def extract_tanks_infos(results, threshold = 100):
             center_image = cropped_image[int(cropped_image.shape[0]/2), int(cropped_image.shape[1]/2)]
             mean_color = center_image.mean()
             is_in_construction.append(mean_color > threshold)
-            size = cropped_image.shape[0]
+            size = cropped_image.shape[0] / scale
             sizes.append(size)
         res["images_boxes"] = images_boxes
         res["is_in_construction"] = is_in_construction
@@ -101,9 +104,11 @@ def count_people_tool(image_path : str) -> int:
     count  = len(res[0]["boxes"])
     return count
 
-def count_satellite(images, classes, conf=0.5, save_name = "image_tanks", save=False):
+def count_satellite(images_path, classes, conf=0.5, save_name = "image_tanks", save=False, scale = 2100, size_threshold = 10):
     """
-    classes : list of int
+    # scale : pixel/meter
+    # 2100 meter/ image size
+    # classes : list of int
     {0: 'plane',
     1: 'ship',
     2: 'storage tank',
@@ -121,18 +126,23 @@ def count_satellite(images, classes, conf=0.5, save_name = "image_tanks", save=F
     14: 'swimming pool'}
     
     """
-    images = [cv2.imread(image) for image in images]
+    images = [cv2.imread(image) for image in images_path]
     model = YOLO("yolo11n-obb.pt")
     results = predict_and_detect_obb(model, images, classes, conf=conf)
     
     if classes == [2]:
-        results = extract_tanks_infos(results)
-        # results = select_tanks(results)
+        results = extract_tanks_infos(results, scale=scale/images[0].shape[1])
+        results = select_tanks(results, size_threshold)
+        
     if save:
         results = show_images_with_boxes(results, save_name)
+    
+    for res, image_path in zip(results, images_path):
+        res["date"] = image_path.split("/")[-1].split("\\")[-1].split(".")[0]
         
-    # with open(f'data/results_satellite_{save_name}.pkl', 'wb') as f:
-    #     pickle.dump(results, f)
+    with open(f'{save_name.split(".")[0]}.pkl', 'wb') as f:
+        pickle.dump(results, f)
+        
     return results 
 
 def count_storage_tanks_tool(image_path : str) -> int:
