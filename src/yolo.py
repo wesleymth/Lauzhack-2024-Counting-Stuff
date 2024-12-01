@@ -154,6 +154,14 @@ def count_storage_tanks_tool(image_path : str) -> int:
     count  = len(res[0]["boxes"])
     return count
 
+def count_ships_tool(image_path : str) -> int:
+    """
+    Count the number of ships in an image
+    """
+    res = count_satellite([image_path], [1], scale=1000, conf =0.1, save = True, debug = True, save_name=image_path.replace('uploads', 'processed'))
+    count  = len(res[0]["boxes"])
+    return count
+
 def history_storage_tanks_Rotterdam_tool() -> dict:
     """
     Count the number of storage tanks in a series of images
