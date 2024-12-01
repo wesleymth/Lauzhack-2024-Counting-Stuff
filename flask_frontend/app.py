@@ -3,6 +3,7 @@ import time as t
 from flask import Flask, render_template, request, jsonify, url_for
 from werkzeug.utils import secure_filename
 from src.yolo import count_people_tool, count_storage_tanks_tool
+from src.plots import plot
 from src.function_calling_agent import get_agent
 import os
 
@@ -48,7 +49,7 @@ def allowed_file(filename):
 # Function to generate chatbot responses
 def get_bot_response(user_message, image_filename:str=None):
     # Placeholder for chatbot logic (e.g., OpenAI API call)
-    agent = get_agent([count_people_tool, count_storage_tanks_tool])
+    agent = get_agent([count_people_tool, count_storage_tanks_tool, plot])
     
     if image_filename is not None:
         user_message += f" image_filename={"./flask_frontend" + image_filename}"
