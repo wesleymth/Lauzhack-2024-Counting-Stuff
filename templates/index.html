@@ -3,28 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualisation des Caractéristiques</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Analyse des Features</title>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Visualisation des caractéristiques au fil du temps</h1>
-
-    <form method="POST">
-        <label for="features">Sélectionnez les caractéristiques :</label><br>
-        {% for feature in feature_options %}
-            <input type="checkbox" name="features" value="{{ feature }}" 
-                   {% if feature in request.form.getlist('features') %}checked{% endif %}>
-            {{ feature }}<br>
+    <h1>Analyse des Features</h1>
+    <label for="feature-select">Sélectionnez une feature :</label>
+    <select id="feature-select">
+        <option value="" disabled selected>-- Choisissez une feature --</option>
+        {% for feature in features %}
+        <option value="{{ feature }}">{{ feature }}</option>
         {% endfor %}
-        <button type="submit">Tracer</button>
-    </form>
+    </select>
+    <div id="plot"></div>
+    <script>
+        $(document).ready(function() {
+            const plotType = "{{ plot_type }}";
 
-    <div>
-        {% if graph_html %}
-            {{ graph_html|safe }}
-        {% else %}
-            <p>Aucun graphique à afficher. Veuillez sélectionner des caractéristiques.</p>
-        {% endif %}
-    </div>
+            $("#feature-select").change(function() {
+                const selectedFeature = $(this).val();
+                if (selectedFeature) {
+                    $.ajax({
+                        url: "/plot",
+                        type: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({ feature: selectedFeature, plot_type: plotType }),
+                        success: function(data) {
+                            const plotData = JSON.parse(data);
+                            Plotly.newPlot("plot", plotData.data, plotData.layout);
+                        },
+                        error: function(error) {
+                            console.error("Erreur :", error.responseJSON);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>

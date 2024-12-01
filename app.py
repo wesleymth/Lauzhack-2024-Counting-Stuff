@@ -1,81 +1,91 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import plotly.graph_objects as go
-import pandas as pd
 import numpy as np
 
 app = Flask(__name__)
 
-# Convertir les données en DataFrame
-def prepare_data(data):
-    timestamps = [entry["timestamp"] for entry in data]
-    processed_data = {"timestamp": pd.to_datetime(timestamps)}
+# Exemple de données retournées par le modèle
+# Une seule image (liste contenant un seul dictionnaire)
+model_results = [{"feature_1": [1, 2, 2, 3, 3, 3, 4, 4, 5], "feature_2": [10, 15, 20, 25], "feature_3": 5}]
 
-    for key in data[0].keys():
-        if key != "timestamp":
-            processed_data[key] = [entry[key] if isinstance(entry[key], list) else [entry[key]] for entry in data]
+# Plusieurs images (analyse temporelle)
+# model_results = [
+#    {"timestamp": "2024-11-01", "nombre_puits": 5, "taille_puits": [10, 12, 9, 11, 13]},
+#    {"timestamp": "2024-11-02", "nombre_puits": 9, "taille_puits": [11, 10, 13, 12, 14, 15, 2, 3, 4]},
+#    {"timestamp": "2024-11-03", "nombre_puits": 4, "taille_puits": [9, 10, 11, 8]},
+#    {"timestamp": "2024-11-04", "nombre_puits": 7, "taille_puits": [14, 15, 13, 16, 15, 17, 18]},
+#]
 
-    return pd.DataFrame(processed_data)
-
-# Calcul des moyennes et des intervalles de confiance
-def get_statistical_summary(values):
-    means = [np.mean(v) for v in values]
-    stds = [np.std(v) for v in values]
-    cis = [1.96 * (s / np.sqrt(len(v))) if len(v) > 1 else 0 for v, s in zip(values, stds)]
-    return means, cis
-
-# Fonction pour créer le graphique Plotly
-def create_plot(features):
-    fig = go.Figure()
-    timestamps = df["timestamp"]
-
-    for feature in features:
-        values = df[feature]
-
-        if isinstance(values.iloc[0], list):
-            # Calculer moyennes et IC pour les listes
-            means, cis = get_statistical_summary(values)
-            fig.add_trace(go.Scatter(
-                x=timestamps, y=means, mode="lines+markers", name=f"Moyenne {feature}"
-            ))
-            fig.add_trace(go.Scatter(
-                x=timestamps, y=[m - ci for m, ci in zip(means, cis)],
-                mode="lines", line=dict(width=0), showlegend=False
-            ))
-            fig.add_trace(go.Scatter(
-                x=timestamps, y=[m + ci for m, ci in zip(means, cis)],
-                mode="lines", fill="tonexty", line=dict(width=0), name=f"IC {feature}"
-            ))
-        else:
-            # Simple lineplot pour les valeurs uniques
-            fig.add_trace(go.Scatter(
-                x=timestamps, y=[v[0] for v in values], mode="lines+markers", name=feature
-            ))
-
-    fig.update_layout(
-        title="Caractéristiques sélectionnées au fil du temps",
-        xaxis_title="Temps",
-        yaxis_title="Valeur",
-        hovermode="x unified"
-    )
-    return fig.to_html(full_html=False)
-
-@app.route('/', methods=["GET", "POST"])
+@app.route("/")
 def index():
-    selected_features = request.form.getlist("features") if request.method == "POST" else []
-    feature_options = [feature for feature in df.columns if feature != "timestamp"]
+    if len(model_results) == 1:  # Une seule image analysée
+        features = [key for key, value in model_results[0].items() if isinstance(value, list)]
+        plot_type = "single"
+    else:  # Plusieurs images analysées
+        features = [key for key in model_results[0] if key != "timestamp"]
+        plot_type = "multiple"
+    return render_template("index.html", features=features, plot_type=plot_type)
 
-    # Générer le graphique si des features sont sélectionnées
-    graph_html = create_plot(selected_features) if selected_features else ""
+@app.route("/plot", methods=["POST"])
+def plot():
+    selected_feature = request.json.get("feature")
+    plot_type = request.json.get("plot_type")
 
-    return render_template("index.html", feature_options=feature_options, graph_html=graph_html)
+    if plot_type == "single":  # Une seule image analysée
+        data = model_results[0].get(selected_feature, [])
+        if isinstance(data, list):  # Distribution pour les features contenant une liste de valeurs
+            fig = go.Figure()
+            fig.add_trace(go.Histogram(x=data, nbinsx=10))
+            fig.update_layout(
+                title=f"Distribution de {selected_feature}",
+                xaxis_title=selected_feature,
+                yaxis_title="Fréquence",
+                template="plotly_white",
+            )
+        else:
+            return jsonify({"error": "Feature non valide pour un histogramme."}), 400
 
-if __name__ == '__main__':
-    data = [
-    {"timestamp": "2024-11-01", "nombre_puits": 5, "taille_puits": [10, 12, 9, 11, 13]},
-    {"timestamp": "2024-11-02", "nombre_puits": 9, "taille_puits": [11, 10, 13, 12, 14, 15, 2, 3, 4]},
-    {"timestamp": "2024-11-03", "nombre_puits": 4, "taille_puits": [9, 10, 11, 8]},
-    {"timestamp": "2024-11-04", "nombre_puits": 7, "taille_puits": [14, 15, 13, 16, 15, 17, 18]},
-]
+    else:  # Plusieurs images analysées
+        timestamps = [entry["timestamp"] for entry in model_results]
+        values = [entry[selected_feature] for entry in model_results]
+        if all(isinstance(v, (int, float)) for v in values):  # Line plot pour une valeur par image
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=timestamps, y=values, mode="lines+markers"))
+            fig.update_layout(
+                title=f"Évolution de {selected_feature} dans le temps",
+                xaxis_title="Temps",
+                yaxis_title=selected_feature,
+                template="plotly_white",
+            )
+        elif all(isinstance(v, list) for v in values):  # Line plot avec intervalle de confiance
+            mean_values = [np.mean(v) for v in values]
+            std_values = [np.std(v) for v in values]
+            lower_bound = [m - s for m, s in zip(mean_values, std_values)]
+            upper_bound = [m + s for m, s in zip(mean_values, std_values)]
 
-    df = prepare_data(data)
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=timestamps, y=mean_values, mode="lines+markers", name="Moyenne"
+            ))
+            fig.add_trace(go.Scatter(
+                x=timestamps + timestamps[::-1],
+                y=upper_bound + lower_bound[::-1],
+                fill="toself",
+                fillcolor="rgba(0,100,250,0.2)",
+                line=dict(color="rgba(255,255,255,0)"),
+                name="Intervalle de confiance",
+                showlegend=True
+            ))
+            fig.update_layout(
+                title=f"Évolution de {selected_feature} avec intervalle de confiance",
+                xaxis_title="Temps",
+                yaxis_title=selected_feature,
+                template="plotly_white",
+            )
+        else:
+            return jsonify({"error": "Format de feature non pris en charge."}), 400
+
+    return jsonify(fig.to_json())
+
+if __name__ == "__main__":
     app.run(debug=True)
