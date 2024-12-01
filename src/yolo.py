@@ -31,7 +31,7 @@ def predict_and_detect(chosen_model, imgs, classes, conf, save_name, save) :
             res["cls"].append(box.cls[0])
         if save :
             res["image_with_boxes"] = img
-            cv2.imwrite(save_name, img[...,::-1])
+            cv2.imwrite(save_name, img)
         all_data.append(res)
     return all_data
 
