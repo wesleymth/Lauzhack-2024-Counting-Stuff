@@ -14,8 +14,11 @@ def get_data(file):
         if 'date' not in model_results[i]:
             model_results[i]['date'] = i
         if 'location' not in model_results[i]:
-            model_results[i]['location'] = f"Location {i}"
+            # extract location from file name
+            location = file.replace('./flask_frontend/static/processed/time-series-', '').split('.')[0]
+            model_results[i]['location'] = location
     return model_results
+
 
 
 def plot_one_feature_temporal(file: str, selected_feature: Literal["size", 'container tanks', "is_in_construction", "number"]):
@@ -86,7 +89,7 @@ def plot_one_feature_temporal(file: str, selected_feature: Literal["size", 'cont
 
     # Export the plot as an HTML file in 'flask_frontend/plots'
     fig.write_html("flask_frontend/static/plots/plot1.html")
-    return 'All done! Check the plot below and interact with it.'
+    return 'Your task is done. Stop any steps here. Please respond by saying that the appropriate plot is displayed below.'
 
 
 def plot_one_feature_distribution(file: str, selected_feature: Literal["size", "is_in_construction"]):
@@ -112,7 +115,7 @@ def plot_one_feature_distribution(file: str, selected_feature: Literal["size", "
 
     # Export the plot as an HTML file in 'flask_frontend/plots'
     fig.write_html("flask_frontend/static/plots/plot2.html")
-    return 'All done! Check the plot below and interact with it.'
+    return 'Your task is done. Please respond by saying that the appropriate plot is displayed below. Stop any steps here.'
 
 
 # def plot_correlation_two_features(file: str, selected_features: list[str]):
@@ -141,7 +144,7 @@ def plot_one_feature_distribution(file: str, selected_feature: Literal["size", "
 
 #     # Export the plot as an HTML file in 'flask_frontend/plots'
 #     fig.write_html("flask_frontend/static/plots/plot.html")
-#     return 'All done! Check the plot below and interact with it.'
+#     return 'Your task is done. Please respond by saying that the appropriate plot is displayed below. Stop any steps here.'
 
 def plot_temporal_comparison_multiple_locations(file: list, selected_feature: str):
     """
@@ -186,9 +189,8 @@ def plot_temporal_comparison_multiple_locations(file: list, selected_feature: st
                 yaxis_title=selected_feature,
                 template="plotly_white",
             )
-        elif all(isinstance(v, (int, float)) for v in values[0]):
-            for i in range(len(values)):
-                fig.add_trace(go.Scatter(x=timestamps, y=values[i], mode="lines+markers", name=model_results[i]["location"]))
+        elif all(isinstance(v, (int, float)) for v in values):
+            fig.add_trace(go.Scatter(x=timestamps, y=values, mode="lines+markers", name=model_results[0]["location"]))
             fig.update_layout(
                 title=f"Comparison of {selected_feature} between multiple locations over time",
                 xaxis_title="Time",
@@ -197,8 +199,8 @@ def plot_temporal_comparison_multiple_locations(file: list, selected_feature: st
             )
 
     # Export the plot as an HTML file in 'flask_frontend/plots'
-    fig.write_html("flask_frontend/plots/plot3.html")
-    return 'All done! Check the plot below and interact with it.'
+    fig.write_html("flask_frontend/static/plots/plot3.html")
+    return 'Your task is done. Please respond by saying that the appropriate plot is displayed below. Stop any steps here.'
 
 def plot_comparison_two_locations(file: str, selected_feature: str):
     """
@@ -239,7 +241,7 @@ def plot_comparison_two_locations(file: str, selected_feature: str):
         )
 
     # Export the plot as an HTML file in 'flask_frontend/plots'
-    fig.write_html("flask_frontend/plots/plot4.html")
-    return 'All done! Check the plot below and interact with it.'
+    fig.write_html("flask_frontend/static/plots/plot4.html")
+    return 'Your task is done. Please respond by saying that the appropriate plot is displayed below. Stop any steps here.'
 
 

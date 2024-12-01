@@ -97,6 +97,7 @@
                         chatBody.scrollTop(chatBody.prop("scrollHeight")); // Scroll to bottom
 
                         let plotBody = $("#plot-body");
+                        plotBody.html("");
                         // Append interactive plots if plot_paths is non-empty
                         if (response.plot_paths && response.plot_paths.length > 0) {
                             response.plot_paths.forEach(plotPath => {
