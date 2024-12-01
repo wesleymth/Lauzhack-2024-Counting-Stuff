@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Interactive Plot</title>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+	<div id="3cf6b3a2-bff4-4fcf-b7a2-0c9f7a01b678" class="plotly-graph-div" style="height: 100%; width: 100%;"></div>
+	<script type="text/javascript">
+		var gd = document.getElementById('3cf6b3a2-bff4-4fcf-b7a2-0c9f7a01b678');
+		Plotly.newPlot(gd, {
+			data: [{
+				type: 'scatter',
+				mode: 'lines+markers',
+				x: [1, 2, 3, 4, 5],
+				y: [10, 11, 12, 13, 14]
+			}],
+			layout: {
+				title: {
+					text: 'Interactive Plot'
+				},
+				xaxis: {
+					title: 'X Axis'
+				},
+				yaxis: {
+					title: 'Y Axis'
+				}
+			}
+		});
+	</script>
+</body>
+
+</html>

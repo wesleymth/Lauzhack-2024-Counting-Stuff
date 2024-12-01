@@ -99,3 +99,12 @@ html {
 		opacity: 0;
 	}
 }
+
+.timestamp {
+	display: block;
+	margin-top: 5px;
+	font-size: 0.8rem;
+	color: #888;
+	/* Subtle color for the timestamp */
+	text-align: right;
+}

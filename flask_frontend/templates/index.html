@@ -69,13 +69,14 @@
 
 						// Append bot's response
 						chatBody.append(`
-                            <div class="message user">
+                            <div class="message bot">
                                 ${
-                                    fileInput
+                                    response.bot_processed_img
                                         ? `<img src="${URL.createObjectURL(response.bot_processed_img)}" alt="Uploaded Image" class="uploaded-image">`
                                         : ""
                                 }
 								<div>${response.bot_response}</div>
+								<span class="timestamp">${response.time}</span>
                             </div>
                         `);
 						
