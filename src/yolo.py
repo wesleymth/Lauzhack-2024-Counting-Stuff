@@ -2,6 +2,7 @@ import cv2
 from ultralytics import YOLO
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 def predict(chosen_model, img, classes=[], conf=0.5):
     if classes:
@@ -11,10 +12,9 @@ def predict(chosen_model, img, classes=[], conf=0.5):
 
     return results
 
-def predict_and_detect(chosen_model, imgs, classes=[], conf=0.5, rectangle_thickness=2, text_thickness=1):
+def predict_and_detect(chosen_model, imgs, classes, conf, save_name, save) : 
     
     results = predict(chosen_model, imgs, classes, conf=conf)
-    name = results[0].names[int(classes[0])] if classes else "all" 
     
     all_data = []
     for result, img in zip(results, imgs):
@@ -24,16 +24,16 @@ def predict_and_detect(chosen_model, imgs, classes=[], conf=0.5, rectangle_thick
             }
         res["original_image"] = img.copy()
         for box in result.boxes:
-            cv2.rectangle(img, (int(box.xyxy[0][0]), int(box.xyxy[0][1])),
-                          (int(box.xyxy[0][2]), int(box.xyxy[0][3])), (255, 0, 0), rectangle_thickness)
-            cv2.putText(img, f"{result.names[int(box.cls[0])]}",
-                        (int(box.xyxy[0][0]), int(box.xyxy[0][1]) - 10),
-                        cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
+            if save:
+                cv2.rectangle(img, (int(box.xyxy[0][0]), int(box.xyxy[0][1])),
+                            (int(box.xyxy[0][2]), int(box.xyxy[0][3])), (255, 0, 0), 2)
             res["boxes"].append(box.xyxy[0])
             res["cls"].append(box.cls[0])
-        res["image_with_boxes"] = img
+        if save :
+            res["image_with_boxes"] = img
+            cv2.imwrite(save_name, img[...,::-1])
         all_data.append(res)
-    return all_data, name
+    return all_data
 
 def predict_and_detect_obb(chosen_model, imgs, classes=[], conf=0.5):
     results = predict(chosen_model, imgs, classes, conf=conf)
@@ -47,17 +47,14 @@ def predict_and_detect_obb(chosen_model, imgs, classes=[], conf=0.5):
     
     return all_data
 
-def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=1):
+def show_images_with_boxes(results, name, rectangle_thickness=2):
     for i, result in enumerate(results) : 
         img = result["original_image"].copy()
         for box in result["boxes"]:
             cv2.rectangle(img, (int(box[0]), int(box[1])),
                         (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
-            # cv2.putText(img, f"{name}",
-            #             (int(box[0]), int(box[1]) - 10),
-            #             cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
         result["image_with_boxes"] = img[...,::-1] #name
-        # cv2.imwrite(name, img[...,::-1])
+        cv2.imwrite(name, img[...,::-1])
     return results
 
 def select_tanks(results, size_threshold, debug):
@@ -92,11 +89,11 @@ def extract_tanks_infos(results, scale, threshold = 100):
         res["size"] = sizes
     return results
 
-def count_people(images, conf=0.5):
+def count_people(images, conf=0.5, save_name = "image_people.png", save=False):
     images = [cv2.imread(image) for image in images]
     model = YOLO("yolo11x.pt")
-    res, name = predict_and_detect(model, images, classes=[0], conf=conf) 
-    with open(f'data/results_{name}.pkl', 'wb') as f:
+    res = predict_and_detect(model, images, classes=[0], conf=conf, save_name=save_name, save=save)
+    with open(f'{save_name.split(".")[0]}.pkl', 'wb') as f:
         pickle.dump(res, f)
     return res
 
@@ -153,6 +150,33 @@ def count_storage_tanks_tool(image_path : str) -> int:
     """
     Count the number of storage tanks in an image
     """
-    res = count_satellite([image_path], [2], save_name=image_path.replace('uploads', 'processed'), save=True)
+    res = count_satellite([image_path], [2], scale=2500, save_name=image_path.replace('uploads', 'processed'), save=True)
     count  = len(res[0]["boxes"])
     return count
+
+def history_storage_tanks_Rotterdam_tool() -> dict:
+    """
+    Count the number of storage tanks in a series of images
+    """
+    folder = "data/time-series"
+    images_path = [os.path.join(folder, i) for i in os.listdir(folder)]
+    result_img = count_satellite(images_path, [2], conf =0.5, save = False, scale =2500, size_threshold=20, save_name="data/time-series-Netherlands-Rotterdam.png", debug =False)
+    return result_img
+
+def history_storage_tanks_cushing_tool() -> dict:
+    """
+    Count the number of storage tanks in a series of images
+    """
+    folder = "data/cushing"
+    images_path = [os.path.join(folder, i) for i in os.listdir(folder)]
+    result_img = count_satellite(images_path, [2], conf =0.5, save = False, scale =5000, size_threshold=20, save_name="data/time-series-USA-cushing.png", debug =False)
+    return result_img
+
+def history_storage_tanks_tool() -> dict:
+    """
+    Count the number of storage tanks in a series of images
+    """
+    folder = "data/UAE"
+    images_path = [os.path.join(folder, i) for i in os.listdir(folder)]
+    result_img = count_satellite(images_path, [2], conf =0.5, save = False, scale =3800, size_threshold=40, save_name="data/time-series-UAE-Fujairah.png", debug =False)
+    return result_img
