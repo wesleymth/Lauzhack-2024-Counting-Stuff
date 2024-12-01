@@ -53,20 +53,21 @@ def show_images_with_boxes(results, name, rectangle_thickness=2, text_thickness=
         for box in result["boxes"]:
             cv2.rectangle(img, (int(box[0]), int(box[1])),
                         (int(box[2]), int(box[3])), (255, 0, 0), rectangle_thickness)
-            cv2.putText(img, f"{name}",
-                        (int(box[0]), int(box[1]) - 10),
-                        cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
-        result["image_with_boxes"] = name
-        cv2.imwrite(name, img[...,::-1])
+            # cv2.putText(img, f"{name}",
+            #             (int(box[0]), int(box[1]) - 10),
+            #             cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 0), text_thickness)
+        result["image_with_boxes"] = img[...,::-1] #name
+        # cv2.imwrite(name, img[...,::-1])
     return results
 
-def select_tanks(results, size_threshold):
+def select_tanks(results, size_threshold, debug):
     selected_results = []
     for res in results:
         idx = [i for i, size in enumerate(res["size"]) if size > size_threshold]
-        res_selected = {key:[res[key][i] for i in idx] for key in ['boxes', 'cls', 'images_boxes', 'is_in_construction', 'size']}   
-        res_selected['original_image']= res['original_image']
-        print(f"Number of tanks detected : {len(idx)}")
+        keys = ['boxes', 'cls', 'images_boxes', 'is_in_construction', 'size'] if debug else ['is_in_construction', 'size']
+        res_selected = {key:[res[key][i] for i in idx] for key in keys}  
+        if debug : 
+            res_selected['original_image']= res['original_image']
         selected_results.append(res_selected)
     return selected_results
 
@@ -76,13 +77,16 @@ def extract_tanks_infos(results, scale, threshold = 100):
         is_in_construction = []
         sizes = []
         for x_min, y_min, x_max, y_max in res["boxes"]:
-            cropped_image = res["original_image"][int(y_min):int(y_max), int(x_min):int(x_max)] 
-            images_boxes.append(cropped_image) 
-            center_image = cropped_image[int(cropped_image.shape[0]/2), int(cropped_image.shape[1]/2)]
-            mean_color = center_image.mean()
-            is_in_construction.append(mean_color > threshold)
-            size = cropped_image.shape[0] / scale
-            sizes.append(size)
+            if y_max - y_min < 0 or x_max - x_min < 0 or y_min < 0 or x_min < 0:
+                continue
+            else : 
+                cropped_image = res["original_image"][int(y_min):int(y_max), int(x_min):int(x_max)] 
+                images_boxes.append(cropped_image) 
+                center_image = cropped_image[int(cropped_image.shape[0]/2), int(cropped_image.shape[1]/2)]
+                mean_color = center_image.mean()
+                is_in_construction.append(mean_color > threshold)
+                size = cropped_image.shape[1] * scale
+                sizes.append(size)
         res["images_boxes"] = images_boxes
         res["is_in_construction"] = is_in_construction
         res["size"] = sizes
@@ -104,7 +108,7 @@ def count_people_tool(image_path : str) -> int:
     count  = len(res[0]["boxes"])
     return count
 
-def count_satellite(images_path, classes, conf=0.5, save_name = "image_tanks", save=False, scale = 2100, size_threshold = 10):
+def count_satellite(images_path, classes, scale, conf=0.5, save_name = "image_tanks", save=False, size_threshold = 10, debug=True):
     """
     # scale : pixel/meter
     # 2100 meter/ image size
@@ -132,7 +136,7 @@ def count_satellite(images_path, classes, conf=0.5, save_name = "image_tanks", s
     
     if classes == [2]:
         results = extract_tanks_infos(results, scale=scale/images[0].shape[1])
-        results = select_tanks(results, size_threshold)
+        results = select_tanks(results, size_threshold, debug)
         
     if save:
         results = show_images_with_boxes(results, save_name)
