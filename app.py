@@ -75,7 +75,7 @@ def plot():
                     xaxis_title="Temps",
                     yaxis_title="Proportion",
                     template="plotly_white",
-                    shapes=[dict(type="rect", xref="paper", x0=0, x1=1, y0=0, y1=1, fillcolor="PaleTurquoise", layer="below", line_width=0)]
+                    shapes=[dict(type="rect", xref="paper", x0=0, x1=1, y0=0, y1=1, fillcolor="DarkBlue", layer="below", line_width=0)]
                 )
             else:
                 mean_values = [np.mean(v) for v in values]
