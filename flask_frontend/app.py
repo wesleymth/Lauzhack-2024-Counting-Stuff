@@ -49,7 +49,7 @@ def allowed_file(filename):
 # Function to generate chatbot responses
 def get_bot_response(user_message, image_filename:str=None):
     # Placeholder for chatbot logic (e.g., OpenAI API call)
-    agent = get_agent([count_people_tool, count_storage_tanks_tool, plot])
+    agent = get_agent([count_people_tool, count_storage_tanks_tool])
     
     if image_filename is not None:
         user_message += f" image_filename={"./flask_frontend" + image_filename}"
